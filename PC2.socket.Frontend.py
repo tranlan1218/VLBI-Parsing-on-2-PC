@@ -162,59 +162,55 @@ total_rows_inserted = sum(len(rows) for rows in freq_tables.values())
 print(f"✅ Total rows prepared for insertion: {total_rows_inserted}")
 
 # ============================================================
-# STEP 5 & 6: Connect to existing DB, create tables, and insert data
+# STEP 5 & 6: Connect to existing DB, create tables, and insert data (UPDATED)
 # ============================================================
+
 # Check if the directory exists (necessary for connection to succeed)
 db_dir = os.path.dirname(db_path)
 if db_dir and not os.path.exists(db_dir):
     os.makedirs(db_dir)
 
-# Connect to the existing/new DB (VLBI.test2.db)
-table_name="frontend_{freq}"
+# Connect to DB
 conn = sqlite3.connect(db_path)
 print(f"\nConnected to DB: {os.path.abspath(db_path)}")
 
-create_table_sql = """
-CREATE TABLE IF NOT EXISTS {table_name} (
+# Build CREATE TABLE SQL using the 40 fixed FrontEnd columns
+value_cols_sql = ", ".join([f"{col} TEXT" for col in FRONTEND_COLUMNS])
+
+create_table_sql = f"""
+CREATE TABLE IF NOT EXISTS {{table_name}} (
     datetime TEXT,
     code TEXT,
     thread_id TEXT,
     level TEXT,
-    {value_cols}
+    {value_cols_sql}
 );
 """
-max_cols_per_table = {}
 
 for freq, rows in freq_tables.items():
-    if not rows:
-        print(f"Skipping frontend_{freq}: No data found.")
-        continue
-
-    max_cols = max(len(r) - 4 for r in rows)
-    max_cols_per_table[freq] = max_cols
-
-    value_cols = ", ".join([f"v{i} TEXT" for i in range(1, max_cols + 1)])
     table_name = f"frontend_{freq}"
 
-    # Drop table to ensure clean insertion compatible with dynamic columns
+    if not rows:
+        print(f"Skipping {table_name}: No data found.")
+        continue
+
+    # Drop existing table to ensure clean schema
     conn.execute(f"DROP TABLE IF EXISTS {table_name}")
-    conn.execute(create_table_sql.format(
-        table_name=table_name,
-        value_cols=value_cols
-    ))
+    conn.execute(create_table_sql.format(table_name=table_name))
     conn.commit()
 
-    # Insert data
+    # Insert rows using pandas
     df = pd.DataFrame(rows)
-    for j in range(1, max_cols + 1):
-        if f"v{j}" not in df.columns:
-            df[f"v{j}"] = None
+
+    # Ensure DataFrame has all 40 frontend columns
+    header_cols = ["datetime", "code", "thread_id", "level"]
+    df = df.reindex(columns=header_cols + FRONTEND_COLUMNS)
 
     df.to_sql(table_name, conn, if_exists="append", index=False)
-    print(f"Inserted {len(df)} rows into **{table_name}**")
+    print(f"✅ Inserted {len(df)} rows into {table_name}")
 
 conn.close()
+print("✅ All filtered and parsed frequency data saved successfully to the database!")
 
 
-print("All filtered and parsed frequency data saved successfully to the database!")
 
