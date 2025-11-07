@@ -74,10 +74,48 @@ print(f"Total log entries detected and filtered for thread ID {TARGET_THREAD_ID}
 # STEP 4: Extract frequency data and organize into tables
 # ============================================================
 
-FRONTEND_COLUMNS = ["RF_RHCP","RF_LHCP","RF_Low","Cryo_ColdPla","Cryo_ShieldBox","Pressure","NormalTemp_RF","NormalTemp_Noise","NormalTemp_Load","LNA_LHCP_Vg1","LNA_LHCP_Vg2","LNA_LHCP_Vg3",
-    "LNA_LHCP_Vg4","LNA_LHCP_Vd1","LNA_LHCP_Vd2","LNA_LHCP_Vd3","LNA_LHCP_Vd4","LNA_LHCP_Id1","LNA_LHCP_Id2","LNA_LHCP_Id3","LNA_LHCP_Id4","NA_RHCP_Vg1","NA_RHCP_Vg2","NA_RHCP_Vg3","NA_RHCP_Vg4",
-    "LNA_RHCP_Vd1","LNA_RHCP_Vd2","LNA_RHCP_Vd3","LNA_RHCP_Vd4","LNA_RHCP_Id1","LNA_RHCP_Id2","LNA_RHCP_Id3","LNA_RHCP_Id4","Observation_Mode","PolarizationStatus","Status_NoiseDiode","Status_PLO",
-    "Status_PCAL","Status_CalChoppe","Status_FlatMirror"]
+FRONTEND_COLUMNS = [
+    "RF_RHCP",
+    "RF_LHCP",
+    "RF_Low",
+    "Cryo_ColdPla",
+    "Cryo_ShieldBox",
+    "Pressure",
+    "NormalTemp_RF",
+    "NormalTemp_Noise",
+    "NormalTemp_Load",
+    "LNA_LHCP_Vg1",
+    "LNA_LHCP_Vg2",
+    "LNA_LHCP_Vg3",
+    "LNA_LHCP_Vg4",
+    "LNA_LHCP_Vd1",
+    "LNA_LHCP_Vd2",
+    "LNA_LHCP_Vd3",
+    "LNA_LHCP_Vd4",
+    "LNA_LHCP_Id1",
+    "LNA_LHCP_Id2",
+    "LNA_LHCP_Id3",
+    "LNA_LHCP_Id4",
+    "NA_RHCP_Vg1",
+    "NA_RHCP_Vg2",
+    "NA_RHCP_Vg3",
+    "NA_RHCP_Vg4",
+    "LNA_RHCP_Vd1",
+    "LNA_RHCP_Vd2",
+    "LNA_RHCP_Vd3",
+    "LNA_RHCP_Vd4",
+    "LNA_RHCP_Id1",
+    "LNA_RHCP_Id2",
+    "LNA_RHCP_Id3",
+    "LNA_RHCP_Id4",
+    "Observation_Mode",
+    "PolarizationStatus",
+    "Status_NoiseDiode",
+    "Status_PLO",
+    "Status_PCAL",
+    "Status_CalChoppe",
+    "Status_FlatMirror"
+]
 
 freq_tables = {
     "2ghz": [],
@@ -91,7 +129,6 @@ for e in entries:
     if not data_str:
         continue
 
-    # Find all frequency blocks in the data string
     found_freq_blocks = freq_pattern.findall(data_str)
 
     for freq, values in found_freq_blocks:
@@ -101,13 +138,13 @@ for e in entries:
 
         # Split comma-separated values
         vals = [v.strip() for v in values.strip(" ,").split(",") if v.strip()]
+
         # Ensure exactly 40 values
         if len(vals) < len(FRONTEND_COLUMNS):
             vals += [None] * (len(FRONTEND_COLUMNS) - len(vals))
         else:
             vals = vals[:len(FRONTEND_COLUMNS)]
 
-        
         row = {
             "datetime": e["datetime"],
             "code": e["code"],
@@ -180,3 +217,4 @@ conn.close()
 
 
 print("All filtered and parsed frequency data saved successfully to the database!")
+
